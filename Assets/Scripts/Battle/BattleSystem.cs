@@ -46,7 +46,7 @@ public class BattleSystem : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
 
-        ActionSelection();
+        ChooseFirstTurn();
     }
 
     void ActionSelection()
@@ -63,6 +63,7 @@ public class BattleSystem : MonoBehaviour
     {
         state = BattleState.BattleOver;
         OnBattleOver(won);
+        playerUnit.foe.OnBattleOver();
     }
 
     public void HandleUpdate()
@@ -187,6 +188,9 @@ public class BattleSystem : MonoBehaviour
                 else
                     enemyUnit.foe.ApplyBoosts(effects.Boosts);
             }
+            yield return ShowStatusChanges(playerUnit.foe);
+            yield return ShowStatusChanges(enemyUnit.foe);
+
         } else
         {
             // Take damage and assign isFainted to true if enemy is defeated
@@ -230,6 +234,8 @@ public class BattleSystem : MonoBehaviour
                 else
                     playerUnit.foe.ApplyBoosts(effects.Boosts);
             }
+            yield return ShowStatusChanges(playerUnit.foe);
+            yield return ShowStatusChanges(enemyUnit.foe);
         }
         else {
             DamageDetails damageDetails = playerUnit.foe.TakeDamage(move, enemyUnit.foe);
@@ -319,6 +325,26 @@ public class BattleSystem : MonoBehaviour
         if (damageDetails.Critical > 1f)
         {
             yield return dialogBox.TypeDialog("A critical hit!");
+        }
+    }
+
+    IEnumerator ShowStatusChanges(Foe foe)
+    {
+        while (foe.StatusChanges.Count > 0 )
+        {
+            var message = foe.StatusChanges.Dequeue();
+            yield return dialogBox.TypeDialog(message);
+        }
+    }
+
+    void ChooseFirstTurn()
+    {
+        if (playerUnit.foe.Speed >= enemyUnit.foe.Speed)
+        {
+            ActionSelection();
+        } else
+        {
+            StartCoroutine(EnemyMove());
         }
     }
 
